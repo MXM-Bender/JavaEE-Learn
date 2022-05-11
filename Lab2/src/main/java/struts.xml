@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+   "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+   "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<constant name="struts.devMode" value="true" />
+	<package name="helloworld" extends="struts-default">
+
+		<action name="login" class="actions.LoginAction"
+			method="execute">
+			<result name="success">/index.jsp</result>
+			<result name="error">/error.jsp</result>
+		</action>
+
+		<action name="add" class="actions.InsertAction">
+			<result name="success">/index.jsp</result>
+		</action>
+
+		<action name="delete" class="actions.DeleteAction">
+			<result name="success">/index.jsp</result>
+		</action>
+
+		<action name="modify" class="actions.ModifyAction">
+			<result name="success">/modify.jsp</result>
+		</action>
+
+		<action name="doModify" class="actions.DoModifyAction"
+			method="execute">
+			<result name="success">/index.jsp</result>
+			<result name="error">/error.jsp</result>
+		</action>
+	</package>
+</struts>

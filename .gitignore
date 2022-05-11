@@ -1,0 +1,12 @@
+*.class
+
+# Eclipse config files
+.metadata/
+Servers/
+# project settings
+*/.settings
+# Project Run Files
+*/build/
+# Project config files
+*/.classpath
+*/.project 
