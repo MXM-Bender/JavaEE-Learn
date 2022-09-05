@@ -1,0 +1,111 @@
+package data.jdbc.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+@Component //此注解将UserService声明为一个组件(Bean)
+
+public class UserService {
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    public User getUserById(long id) {
+        return jdbcTemplate.execute((Connection conn) -> {
+            try (var ps = conn.prepareStatement("SELECT * FROM  users where id = ?")) {
+                ps.setObject(1, id);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new User(
+                                rs.getLong("id"),
+                                rs.getString("email"),
+                                rs.getString("password"),
+                                rs.getString("name")
+                        );
+                    }
+                    throw new RuntimeException("user not foun by id.");
+                }
+            }
+        });
+    }
+
+    public User getUserByName(String name) {
+        return jdbcTemplate.execute("SELECT * FROM  users where  name = ?", (PreparedStatement ps) -> {
+            ps.setObject(1, name);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                            rs.getLong("id"),
+                            rs.getString("email"),
+                            rs.getString("password"),
+                            rs.getString("name")
+                    );
+                }
+                throw new RuntimeException("user not foun by name.");
+            }
+        });
+    }
+
+    public User getUserByEmail(String email) {
+        return jdbcTemplate.queryForObject("SElECT * FROM users where email = ?", new Object[]{email}, (ResultSet rs, int rowNum) -> {
+            return new User(
+                    rs.getLong("id"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getString("name"));
+        });
+    }
+
+    public long getUsers() {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", null, (ResultSet rs, int rowNum) -> {
+            return rs.getLong(1);
+        });
+    }
+
+    public List<User> getUsers(int pageIndex) {
+        int limit = 100;
+        int offset = limit * (pageIndex - 1);
+        return jdbcTemplate.query("SELECT * FROM users LIMIT ? OFFSET ?", new Object[]{limit, offset}, new BeanPropertyRowMapper<>(User.class));
+    }
+
+    public User login(String email, String password) {
+        User user = getUserByEmail(email);
+        if (user.getPassword().equals(password)) {
+            return user;
+        }
+        throw new RuntimeException("login failed!");
+    }
+
+    public User register(String email, String password, String name) {
+        KeyHolder holder = new GeneratedKeyHolder();
+        if (1 != jdbcTemplate.update((con) -> {
+            var ps = con.prepareStatement("INSERT INTO users(email,password,name) VALUES (?,?,?)",
+                    Statement.RETURN_GENERATED_KEYS);
+            ps.setObject(1, email);
+            ps.setObject(2, password);
+            ps.setObject(3, name);
+            return ps;
+        }, holder)) {
+            throw new RuntimeException("Insert failed");
+        }
+        return new User(holder.getKey().longValue(), email, password, name);
+    }
+
+    public void updateUser(User user) {
+        if (1 != jdbcTemplate.update("UPDATE users SET name = ? WHERE id = ?", user.getName(), user.getId())) {
+            throw new RuntimeException("User not found by id");
+        }
+    }
+
+}

@@ -10,3 +10,5 @@ Servers/
 # Project config files
 */.classpath
 */.project 
+*/.idea
+*/testdb*
